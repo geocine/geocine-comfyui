@@ -8,6 +8,9 @@ class ImageScaleNode:
             "required": {
                 "width": ("INT", {"default": 512, "min": 32, "max": 8192}),
                 "height": ("INT", {"default": 512, "min": 32, "max": 8192}),
+            },
+            "optional": {
+                "upscale_by": ("FLOAT", {"default": 0, "min": 0, "max": 10.0}),
             }
         }
     
@@ -26,11 +29,15 @@ class ImageScaleNode:
 
         return new_width, new_height
     
-    def scale_image(self, width, height):
+    def scale_image(self, width, height, upscale_by=0):
         tile_padding = 32
-        latent_width, latent_height = ImageScaleNode.image_fit(width, height)
         
-        upscale_by = max(width / latent_width, height / latent_height)
+        if upscale_by > 0:
+            latent_width = int(width * upscale_by)
+            latent_height = int(height * upscale_by)
+        else:
+            latent_width, latent_height = ImageScaleNode.image_fit(width, height)
+            upscale_by = max(width / latent_width, height / latent_height)
         
         tile_width = int(upscale_by * width / 2 + tile_padding)
         tile_height = int(upscale_by * height / 2 + tile_padding)
