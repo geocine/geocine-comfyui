@@ -1,0 +1,14 @@
+[project]
+name = "geocine-comfyui"
+description = "NODES:Image Selector (geocine), Image Scale (geocine)"
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/geocine/geocine-comfyui"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "geocine-comfyui"
+Icon = ""
