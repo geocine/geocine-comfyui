@@ -1,7 +1,7 @@
 import torch
 
 class ImageScaleNode:
-    CATEGORY = "geocine > scale"
+    CATEGORY = "geocine"
     @classmethod
     def INPUT_TYPES(s):
         return {

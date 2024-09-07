@@ -1,10 +1,11 @@
 import torch
 
 class ImageSelector:
-    CATEGORY = "geocine > selector"
+    CATEGORY = "geocine"
     @classmethod    
     def INPUT_TYPES(s):
         return { "required":  { "images": ("IMAGE",), } }
+    
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "choose_image"
 
