@@ -46,7 +46,7 @@ function handleInputModeWidgetsVisibility(node, inputModeValue) {
     const loraNameWidgets = [...generateWidgetNames("lora_name", 20)];
 
     const nodeVisibilityMap = {
-        "Lora Cycler": {
+        "LoRA Name List": {
             "LoRA Names": [...loraNameWidgets]
         }
     };
@@ -95,7 +95,7 @@ function handleVisibility(node, countValue, node_type) {
 
 // Create a map of node titles to their respective widget handlers
 const nodeWidgetHandlers = {
-    "Lora Cycler": {
+    "LoRA Name List": {
         'lora_count': handleXYInputLoRALoraCount
     },
 };
@@ -110,7 +110,7 @@ function widgetLogic(node, widget) {
     }
 }
 
-// Lora Cycler Handlers
+// LoRA Name List Handlers
 function handleXYInputLoRAInputMode(node, widget) {
     handleInputModeWidgetsVisibility(node, widget.value);
     handleVisibility(node, findWidgetByName(node, "lora_count").value, "LoRA");
