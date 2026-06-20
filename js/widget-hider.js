@@ -2,6 +2,7 @@ import { app } from "../../scripts/app.js";
 
 let origProps = {};
 let initialized = false;
+const VALUE_HOOK = Symbol.for("geocine.widgethider.valueHook");
 
 const findWidgetByName = (node, name) => {
     return node.widgets ? node.widgets.find((w) => w.name === name) : null;
@@ -134,27 +135,37 @@ app.registerExtension({
 
             widgetLogic(node, w);
 
-            Object.defineProperty(w, 'value', {
-                get() {
-                    // If there's an original getter, use it. Otherwise, return widgetValue.
-                    let valueToReturn = originalDescriptor && originalDescriptor.get
-                        ? originalDescriptor.get.call(w)
-                        : widgetValue;
+            if (w[VALUE_HOOK]) continue;
+            if (originalDescriptor && originalDescriptor.configurable === false) continue;
 
-                    return valueToReturn;
-                },
-                set(newVal) {
+            try {
+                Object.defineProperty(w, 'value', {
+                    configurable: true,
+                    enumerable: originalDescriptor ? originalDescriptor.enumerable : true,
+                    get() {
+                        // If there's an original getter, use it. Otherwise, return widgetValue.
+                        let valueToReturn = originalDescriptor && originalDescriptor.get
+                            ? originalDescriptor.get.call(w)
+                            : widgetValue;
 
-                    // If there's an original setter, use it. Otherwise, set widgetValue.
-                    if (originalDescriptor && originalDescriptor.set) {
-                        originalDescriptor.set.call(w, newVal);
-                    } else {
-                        widgetValue = newVal;
+                        return valueToReturn;
+                    },
+                    set(newVal) {
+
+                        // If there's an original setter, use it. Otherwise, set widgetValue.
+                        if (originalDescriptor && originalDescriptor.set) {
+                            originalDescriptor.set.call(w, newVal);
+                        } else {
+                            widgetValue = newVal;
+                        }
+
+                        widgetLogic(node, w);
                     }
-
-                    widgetLogic(node, w);
-                }
-            });
+                });
+                w[VALUE_HOOK] = true;
+            } catch {
+                // Another extension already installed a non-configurable value accessor.
+            }
         }
         setTimeout(() => {initialized = true;}, 500);
     }
