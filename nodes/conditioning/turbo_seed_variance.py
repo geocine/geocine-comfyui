@@ -24,13 +24,13 @@ class ModeProfile:
 
 
 MODE_PROFILES = {
-    "z-image": ModeProfile(
-        name="z-image",
+    "z-image-turbo": ModeProfile(
+        name="z-image-turbo",
         padding_eps=0.0,
-        use_auto_strength=False,
+        use_auto_strength=True,
     ),
-    "krea2": ModeProfile(
-        name="krea2",
+    "krea2-turbo": ModeProfile(
+        name="krea2-turbo",
         padding_eps=1e-6,
         use_auto_strength=True,
     ),
@@ -74,8 +74,8 @@ class TurboSeedVariance:
                 "mode": (
                     list(MODE_PROFILES.keys()),
                     {
-                        "default": "z-image",
-                        "tooltip": "Use z-image for Z-Image Turbo, krea2 for Krea 2 Turbo, or flux2-klein for Flux2 Klein distilled workflows.",
+                        "default": "z-image-turbo",
+                        "tooltip": "Use z-image-turbo for Z-Image Turbo, krea2-turbo for Krea 2 Turbo, or flux2-klein for Flux2 Klein distilled workflows.",
                     },
                 ),
                 "randomize_percent": (
@@ -95,7 +95,7 @@ class TurboSeedVariance:
                         "min": 0.0,
                         "max": 100.0,
                         "step": 0.05,
-                        "tooltip": "Auto modes only. If greater than 0, noise scale is measured embedding std times this factor. Set to 0 to use strength.",
+                        "tooltip": "If greater than 0, noise scale is measured embedding std times this factor. Set to 0 to use strength.",
                     },
                 ),
                 "strength": (
@@ -105,7 +105,7 @@ class TurboSeedVariance:
                         "min": -0xFFFFFFFF,
                         "max": 0xFFFFFFFF,
                         "step": 0.00001,
-                        "tooltip": "Absolute noise scale. Always used in z-image mode; used in auto modes when auto_strength_factor is 0.",
+                        "tooltip": "Absolute fallback noise scale used when auto_strength_factor is 0.",
                     },
                 ),
                 "noise_insert": (
@@ -122,7 +122,7 @@ class TurboSeedVariance:
                         "min": 1.0,
                         "max": 99.0,
                         "step": 1.0,
-                        "tooltip": "Percent of sampling steps before switching between noised and clean conditioning. Try 20 for z-image, 25 for krea2 8-step workflows.",
+                        "tooltip": "Percent of sampling steps before switching between noised and clean conditioning. Try 20 for z-image-turbo, 25 for krea2-turbo 8-step workflows.",
                     },
                 ),
                 "seed": (
@@ -169,7 +169,11 @@ class TurboSeedVariance:
         "seedvarianceenhancer",
         "turbo seed variance",
         "z-image",
+        "z-image turbo",
+        "z-image-turbo",
         "krea2",
+        "krea2 turbo",
+        "krea2-turbo",
         "flux2",
         "klein",
         "conditioning noise",
