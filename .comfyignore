@@ -1,0 +1,57 @@
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Maintainer scripts and local tooling
+.comfyignore
+publish
+scripts/
+.codex/
+.agents/
+.vscode/
+.idea/
+*.code-workspace
+.history/
+node_modules/
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+*.zip
+*.tar
+*.tar.gz
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local configuration and secrets
+.env
+.env.*
+
+# ComfyUI/model artifacts that must not be packed into the registry zip
+models/
+types/
+*.ckpt
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.onnx
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
