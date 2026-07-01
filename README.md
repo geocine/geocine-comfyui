@@ -24,7 +24,15 @@ Display names stay readable in ComfyUI. Saved workflow node IDs use a `Geocine` 
 
 ## Install
 
-Clone this repository into `ComfyUI/custom_nodes`, then restart ComfyUI.
+Install from the ComfyUI registry with the Comfy CLI, then restart ComfyUI.
+
+```sh
+comfy node install geocine-comfyui
+```
+
+In ComfyUI Manager, search for `geocine-comfyui`, click install, then restart ComfyUI.
+
+You can also clone this repository into `ComfyUI/custom_nodes` manually.
 
 ```sh
 git clone https://github.com/geocine/geocine-comfyui.git ComfyUI/custom_nodes/geocine-comfyui
@@ -32,16 +40,4 @@ git clone https://github.com/geocine/geocine-comfyui.git ComfyUI/custom_nodes/ge
 
 ## Development
 
-Python node implementations live under `nodes/<domain>/`. Frontend extensions live in the mirrored `web/js/<domain>/` folders. The root `__init__.py` only registers stable ComfyUI node IDs, display names, and `WEB_DIRECTORY`.
-
-## Publish
-
-Maintainers can publish a new registry version from a clean checkout:
-
-```sh
-./publish
-./publish minor
-./publish major
-```
-
-`./publish` defaults to a patch bump, commits the new `pyproject.toml` version, then runs `python -m comfy node publish`.
+Development and publishing notes live in [DEVELOPMENT.md](./DEVELOPMENT.md).
