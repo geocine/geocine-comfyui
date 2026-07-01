@@ -10,7 +10,7 @@ Small utility nodes for ComfyUI workflows, focused on practical image, text, see
 
 - `Image Selector`: choose one image from a batch by index.
 - `Image Scale`: scale an image by width, height, or percentage.
-- `Seed Variance Enhancer`: add seed-dependent conditioning noise for Z-Image Turbo or Krea 2 mode.
+- `Turbo Seed Variance`: add seed-dependent conditioning noise for turbo/distilled low-step models.
 - `Seed to Noise`: convert a seed into ComfyUI random noise.
 - `LoRA Name List`: build a list of selected LoRA names.
 - `LoRA Loader Stack`: apply multiple LoRAs to a model in order, without a CLIP input.

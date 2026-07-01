@@ -1,6 +1,6 @@
 from .nodes.image.selector import ImageSelector
 from .nodes.image.scale import ImageScaleNode
-from .nodes.conditioning.seed_variance_enhancer import SeedVarianceEnhancer
+from .nodes.conditioning.turbo_seed_variance import TurboSeedVariance
 from .nodes.sampling.seed_to_noise import SeedToNoiseNode
 from .nodes.lora.name_list import LoraNameList
 from .nodes.lora.loader_stack import LoraLoaderStack
@@ -15,7 +15,7 @@ WEB_DIRECTORY = "./web"
 NODE_CLASS_MAPPINGS = {
     "ImageSelector": ImageSelector,
     "ImageScale": ImageScaleNode,
-    "SeedVarianceEnhancer": SeedVarianceEnhancer,
+    "TurboSeedVariance": TurboSeedVariance,
     "SeedToNoise": SeedToNoiseNode,
     "LoraNameList": LoraNameList,
     "LoraLoaderStack": LoraLoaderStack,
@@ -29,7 +29,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageSelector": "Image Selector",
     "ImageScale": "Image Scale",
-    "SeedVarianceEnhancer": "Seed Variance Enhancer",
+    "TurboSeedVariance": "Turbo Seed Variance",
     "SeedToNoise": "Seed to Noise",
     "LoraNameList": "LoRA Name List",
     "LoraLoaderStack": "LoRA Loader Stack",

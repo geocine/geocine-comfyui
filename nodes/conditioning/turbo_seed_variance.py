@@ -20,6 +20,7 @@ class ModeProfile:
     name: str
     padding_eps: float
     use_auto_strength: bool
+    auto_strength_scale: float = 1.0
 
 
 MODE_PROFILES = {
@@ -32,6 +33,12 @@ MODE_PROFILES = {
         name="krea2",
         padding_eps=1e-6,
         use_auto_strength=True,
+    ),
+    "flux2-klein": ModeProfile(
+        name="flux2-klein",
+        padding_eps=1e-6,
+        use_auto_strength=True,
+        auto_strength_scale=0.5,
     ),
 }
 
@@ -58,7 +65,7 @@ def clone_conditioning_item(item):
     return [tensor, metadata]
 
 
-class SeedVarianceEnhancer:
+class TurboSeedVariance:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -68,7 +75,7 @@ class SeedVarianceEnhancer:
                     list(MODE_PROFILES.keys()),
                     {
                         "default": "z-image",
-                        "tooltip": "Use z-image for Z-Image Turbo style conditioning, or krea2 for Krea 2 Turbo/Qwen3-VL conditioning.",
+                        "tooltip": "Use z-image for Z-Image Turbo, krea2 for Krea 2 Turbo, or flux2-klein for Flux2 Klein distilled workflows.",
                     },
                 ),
                 "randomize_percent": (
@@ -88,7 +95,7 @@ class SeedVarianceEnhancer:
                         "min": 0.0,
                         "max": 100.0,
                         "step": 0.05,
-                        "tooltip": "krea2 mode only. If greater than 0, noise scale is measured embedding std times this factor. Set to 0 to use strength.",
+                        "tooltip": "Auto modes only. If greater than 0, noise scale is measured embedding std times this factor. Set to 0 to use strength.",
                     },
                 ),
                 "strength": (
@@ -98,7 +105,7 @@ class SeedVarianceEnhancer:
                         "min": -0xFFFFFFFF,
                         "max": 0xFFFFFFFF,
                         "step": 0.00001,
-                        "tooltip": "Absolute noise scale. Always used in z-image mode; used in krea2 mode when auto_strength_factor is 0.",
+                        "tooltip": "Absolute noise scale. Always used in z-image mode; used in auto modes when auto_strength_factor is 0.",
                     },
                 ),
                 "noise_insert": (
@@ -156,16 +163,49 @@ class SeedVarianceEnhancer:
     RETURN_NAMES = ("conditioning",)
     FUNCTION = "randomize_conditioning"
     CATEGORY = "geocine/conditioning"
-    DESCRIPTION = "Add seed-dependent noise to text conditioning to increase variation for low-variance turbo models."
-    SEARCH_ALIASES = ["seed variance", "seedvarianceenhancer", "z-image", "krea2", "conditioning noise"]
+    DESCRIPTION = "Add seed-dependent noise to text conditioning to increase variation for turbo/distilled low-step models."
+    SEARCH_ALIASES = [
+        "seed variance",
+        "seedvarianceenhancer",
+        "turbo seed variance",
+        "z-image",
+        "krea2",
+        "flux2",
+        "klein",
+        "conditioning noise",
+    ]
 
-    def _token_activity(self, tensor, eps):
+    def _attention_mask(self, metadata, tensor):
+        attention_mask = metadata.get("attention_mask")
+        if not isinstance(attention_mask, torch.Tensor):
+            return None
+
+        if attention_mask.dim() == 1:
+            attention_mask = attention_mask.unsqueeze(0)
+        elif attention_mask.dim() > 2:
+            attention_mask = attention_mask.reshape(attention_mask.shape[0], -1)
+
+        if attention_mask.shape[-1] != tensor.size(1):
+            return None
+
+        attention_mask = attention_mask.to(device=tensor.device, dtype=torch.bool)
+        if attention_mask.shape[0] == 1 and tensor.size(0) > 1:
+            attention_mask = attention_mask.expand(tensor.size(0), -1)
+        if attention_mask.shape[0] != tensor.size(0):
+            return None
+
+        return attention_mask
+
+    def _token_activity(self, tensor, eps, attention_mask=None):
+        if attention_mask is not None:
+            return attention_mask.any(dim=0).tolist()
+
         if eps > 0:
             return [not torch.all(tensor[:, index, ...].abs() < eps).item() for index in range(tensor.size(1))]
         return [not torch.all(tensor[:, index, ...] == 0).item() for index in range(tensor.size(1))]
 
-    def _real_region(self, tensor, eps):
-        token_activity = self._token_activity(tensor, eps)
+    def _real_region(self, tensor, eps, attention_mask=None):
+        token_activity = self._token_activity(tensor, eps, attention_mask)
         last_real = -1
         for index, is_real in enumerate(token_activity):
             if is_real:
@@ -198,7 +238,7 @@ class SeedVarianceEnhancer:
         real_region = tensor[:, real_slice, :]
         measured_std = real_region.std(unbiased=False).item()
         if profile.use_auto_strength and auto_strength_factor > 0:
-            return measured_std * auto_strength_factor, measured_std
+            return measured_std * auto_strength_factor * profile.auto_strength_scale, measured_std
         return strength, measured_std
 
     def _noise_mask(self, tensor, randomize_percent, seed):
@@ -212,7 +252,7 @@ class SeedVarianceEnhancer:
     def _is_conditioning_item(self, item):
         return isinstance(item, (list, tuple)) and len(item) >= 2
 
-    def _apply_prompt_mask(self, noise_mask, tensor, token_activity, real_tokens, mask_starts_at, mask_percent):
+    def _apply_prompt_mask(self, noise_mask, tensor, token_activity, real_tokens, mask_starts_at, mask_percent, attention_mask=None):
         protected = torch.zeros((1, tensor.size(1), 1), dtype=torch.bool, device=tensor.device)
 
         if mask_percent > 0:
@@ -225,12 +265,16 @@ class SeedVarianceEnhancer:
                 end = protected_count
             protected[:, start:end, :] = True
 
-        null_tokens = torch.tensor(
-            [not is_real for is_real in token_activity],
-            dtype=torch.bool,
-            device=tensor.device,
-        ).view(1, -1, 1)
-        protected = protected | null_tokens
+        protected = protected.expand(tensor.size(0), -1, -1).clone()
+        if attention_mask is not None:
+            protected = protected | ~attention_mask.view(tensor.size(0), tensor.size(1), 1)
+        else:
+            null_tokens = torch.tensor(
+                [not is_real for is_real in token_activity],
+                dtype=torch.bool,
+                device=tensor.device,
+            ).view(1, -1, 1)
+            protected = protected | null_tokens
 
         if protected.any():
             return noise_mask & ~protected.expand_as(noise_mask)
@@ -244,7 +288,7 @@ class SeedVarianceEnhancer:
         l2_percent = (real_noise.norm().item() / base_norm * 100.0) if base_norm > 0 else 0.0
 
         logging.info(
-            "SeedVarianceEnhancer[%s]: shape=%s real_tokens=%s/%s std=%.6f effective_strength=%.6f values_noised=%.1f%% l2_perturbation=%.2f%% seed=%s",
+            "TurboSeedVariance[%s]: shape=%s real_tokens=%s/%s std=%.6f effective_strength=%.6f values_noised=%.1f%% l2_perturbation=%.2f%% seed=%s",
             mode,
             tuple(tensor.shape),
             real_tokens,
@@ -284,20 +328,21 @@ class SeedVarianceEnhancer:
             or (len(conditioning) > 1 and not self._is_conditioning_item(conditioning[1]))
         ):
             if log_to_console:
-                logging.warning("SeedVarianceEnhancer received an empty conditioning. Passing it through unchanged.")
+                logging.warning("TurboSeedVariance received an empty conditioning. Passing it through unchanged.")
             return (conditioning,)
 
         if len(conditioning) > 2 and log_to_console:
-            logging.warning("SeedVarianceEnhancer only uses the first two conditioning entries.")
+            logging.warning("TurboSeedVariance only uses the first two conditioning entries.")
 
         noised_item, clean_item = self._select_conditioning_items(conditioning, noise_insert)
         tensor = noised_item[0]
         if not isinstance(tensor, torch.Tensor):
             if log_to_console:
-                logging.warning("SeedVarianceEnhancer received conditioning without a tensor. Passing it through unchanged.")
+                logging.warning("TurboSeedVariance received conditioning without a tensor. Passing it through unchanged.")
             return (conditioning,)
 
-        real_slice, real_tokens, token_activity = self._real_region(tensor, profile.padding_eps)
+        attention_mask = self._attention_mask(noised_item[1], tensor)
+        real_slice, real_tokens, token_activity = self._real_region(tensor, profile.padding_eps, attention_mask)
         effective_strength, measured_std = self._effective_strength(
             profile,
             tensor,
@@ -317,6 +362,7 @@ class SeedVarianceEnhancer:
             real_tokens,
             mask_starts_at,
             mask_percent,
+            attention_mask,
         )
 
         modified_noise = (base_noise * 2 * effective_strength - effective_strength) * noise_mask
