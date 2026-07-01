@@ -1,7 +1,7 @@
 [project]
 name = "geocine-comfyui"
 description = "Small utility nodes for ComfyUI workflows."
-version = "1.0.0"
+version = "1.0.1"
 license = {text = "MIT"}
 dependencies = ["openai>=1.0.0"]
 
