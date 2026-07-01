@@ -21,6 +21,7 @@ class ModeProfile:
     padding_eps: float
     use_auto_strength: bool
     auto_strength_scale: float = 1.0
+    layer_count: int = 1
 
 
 MODE_PROFILES = {
@@ -34,13 +35,15 @@ MODE_PROFILES = {
         name="krea2-turbo",
         padding_eps=1e-6,
         use_auto_strength=True,
-        auto_strength_scale=0.1,
+        auto_strength_scale=0.0025,
+        layer_count=12,
     ),
     "flux2-klein": ModeProfile(
         name="flux2-klein",
         padding_eps=1e-6,
         use_auto_strength=True,
-        auto_strength_scale=0.1,
+        auto_strength_scale=0.01,
+        layer_count=3,
     ),
 }
 
@@ -247,13 +250,28 @@ class TurboSeedVariance:
             return measured_std * auto_strength_factor * profile.auto_strength_scale, measured_std
         return strength, measured_std
 
-    def _noise_mask(self, tensor, randomize_percent, seed):
+    def _noise_shape(self, tensor, profile):
+        if profile.layer_count <= 1 or tensor.size(-1) % profile.layer_count != 0:
+            return tensor.shape
+        return (*tensor.shape[:-1], 1, tensor.size(-1) // profile.layer_count)
+
+    def _expand_layer_coherent(self, value, tensor, profile):
+        if value.shape == tensor.shape:
+            return value
+        value = value.expand(*tensor.shape[:-1], profile.layer_count, value.size(-1))
+        return value.reshape_as(tensor)
+
+    def _noise_mask(self, tensor, randomize_percent, seed, profile):
+        noise_shape = self._noise_shape(tensor, profile)
         with preserved_torch_rng():
             torch.manual_seed(seed)
-            noise = torch.rand_like(tensor)
+            noise = torch.rand(noise_shape, device=tensor.device, dtype=tensor.dtype)
             torch.manual_seed(seed + 1)
-            mask = torch.rand_like(tensor) < randomize_percent
-        return noise, mask
+            mask = torch.rand(noise_shape, device=tensor.device, dtype=tensor.dtype) < randomize_percent
+        return (
+            self._expand_layer_coherent(noise, tensor, profile),
+            self._expand_layer_coherent(mask, tensor, profile),
+        )
 
     def _is_conditioning_item(self, item):
         return isinstance(item, (list, tuple)) and len(item) >= 2
@@ -286,7 +304,7 @@ class TurboSeedVariance:
             return noise_mask & ~protected.expand_as(noise_mask)
         return noise_mask
 
-    def _log_stats(self, mode, tensor, real_slice, real_tokens, measured_std, effective_strength, noise_mask, modified_noise, seed):
+    def _log_stats(self, profile, tensor, real_slice, real_tokens, measured_std, effective_strength, noise_mask, modified_noise, seed):
         real_tensor = tensor[:, real_slice, :]
         real_noise = modified_noise[:, real_slice, :]
         noised_percent = noise_mask[:, real_slice, :].float().mean().item() * 100.0
@@ -294,8 +312,8 @@ class TurboSeedVariance:
         l2_percent = (real_noise.norm().item() / base_norm * 100.0) if base_norm > 0 else 0.0
 
         logging.info(
-            "TurboSeedVariance[%s]: shape=%s real_tokens=%s/%s std=%.6f effective_strength=%.6f values_noised=%.1f%% l2_perturbation=%.2f%% seed=%s",
-            mode,
+            "TurboSeedVariance[%s]: shape=%s real_tokens=%s/%s std=%.6f effective_strength=%.6f values_noised=%.1f%% l2_perturbation=%.2f%% layer_count=%s seed=%s",
+            profile.name,
             tuple(tensor.shape),
             real_tokens,
             tensor.size(1),
@@ -303,6 +321,7 @@ class TurboSeedVariance:
             effective_strength,
             noised_percent,
             l2_percent,
+            profile.layer_count,
             seed,
         )
 
@@ -360,7 +379,7 @@ class TurboSeedVariance:
         if effective_strength == 0:
             return (conditioning,)
 
-        base_noise, noise_mask = self._noise_mask(tensor, randomize_percent, seed)
+        base_noise, noise_mask = self._noise_mask(tensor, randomize_percent, seed, profile)
         noise_mask = self._apply_prompt_mask(
             noise_mask,
             tensor,
@@ -376,7 +395,7 @@ class TurboSeedVariance:
 
         if log_to_console:
             self._log_stats(
-                profile.name,
+                profile,
                 tensor,
                 real_slice,
                 real_tokens,
