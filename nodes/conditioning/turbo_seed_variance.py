@@ -28,17 +28,19 @@ MODE_PROFILES = {
         name="z-image-turbo",
         padding_eps=0.0,
         use_auto_strength=True,
+        auto_strength_scale=0.1,
     ),
     "krea2-turbo": ModeProfile(
         name="krea2-turbo",
         padding_eps=1e-6,
         use_auto_strength=True,
+        auto_strength_scale=0.1,
     ),
     "flux2-klein": ModeProfile(
         name="flux2-klein",
         padding_eps=1e-6,
         use_auto_strength=True,
-        auto_strength_scale=0.5,
+        auto_strength_scale=0.1,
     ),
 }
 
@@ -95,15 +97,15 @@ class TurboSeedVariance:
                         "min": 0.0,
                         "max": 100.0,
                         "step": 0.05,
-                        "tooltip": "If greater than 0, noise scale is measured embedding std times this factor. Set to 0 to use strength.",
+                        "tooltip": "If greater than 0, noise scale is measured embedding std times this factor and the selected mode's calibrated scale. Set to 0 to use strength.",
                     },
                 ),
                 "strength": (
                     "FLOAT",
                     {
-                        "default": 20.0,
-                        "min": -0xFFFFFFFF,
-                        "max": 0xFFFFFFFF,
+                        "default": 0.05,
+                        "min": 0.0,
+                        "max": 10.0,
                         "step": 0.00001,
                         "tooltip": "Absolute fallback noise scale used when auto_strength_factor is 0.",
                     },
