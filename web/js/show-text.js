@@ -1,5 +1,6 @@
-import { app } from "../../scripts/app.js";
-import { ComfyWidgets } from "../../scripts/widgets.js";
+import { app } from "../../../scripts/app.js";
+
+const ComfyWidgets = window.comfyAPI.widgets.ComfyWidgets;
 
 app.registerExtension({
   name: "geocine.showtext",
@@ -25,8 +26,14 @@ app.registerExtension({
             ["STRING", { multiline: true }],
             app
           ).widget;
-          w.inputEl.readOnly = true;
-          w.inputEl.style.opacity = 0.6;
+          w.options.read_only = true;
+          w.options.serialize = false;
+          w.serialize = false;
+          const element = w.element;
+          if (element) {
+            element.readOnly = true;
+            element.style.opacity = 0.6;
+          }
           w.value = list;
         }
 
@@ -39,8 +46,8 @@ app.registerExtension({
           if (sz[1] < this.size[1]) {
             sz[1] = this.size[1];
           }
-          this.onResize?.(sz);
-          app.graph.setDirtyCanvas(true, false);
+          this.setSize(sz);
+          this.graph?.setDirtyCanvas(true, false);
         });
       }
 
@@ -55,11 +62,10 @@ app.registerExtension({
       const onConfigure = nodeType.prototype.onConfigure;
       nodeType.prototype.onConfigure = function (data) {
         onConfigure?.apply(this, arguments);
-        if (this.widgets_values?.length) {
-          populate.call(
-            this,
-            this.widgets_values.slice(+this.widgets_values.length > 1)
-          );
+        const widgetValues = data?.widgets_values;
+        if (widgetValues?.length) {
+          const startIndex = widgetValues.length > 1 ? 1 : 0;
+          populate.call(this, widgetValues.slice(startIndex));
         }
       };
     }

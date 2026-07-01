@@ -1,0 +1,16 @@
+[project]
+name = "geocine-comfyui"
+description = "Small utility nodes for ComfyUI workflows."
+version = "1.0.0"
+license = {text = "MIT"}
+dependencies = ["openai>=1.0.0"]
+
+[project.urls]
+Repository = "https://github.com/geocine/geocine-comfyui"
+Issues = "https://github.com/geocine/geocine-comfyui/issues"
+
+[tool.comfy]
+PublisherId = "geocine"
+DisplayName = "geocine-comfyui"
+Icon = "https://avatars.githubusercontent.com/u/507464"
+

@@ -1,5 +1,6 @@
-import { app } from "../../scripts/app.js";
-import { ComfyWidgets } from "../../scripts/widgets.js";
+import { app } from "../../../scripts/app.js";
+
+const ComfyWidgets = window.comfyAPI.widgets.ComfyWidgets;
 
 app.registerExtension({
   name: "geocine.previewText",
@@ -70,9 +71,13 @@ app.registerExtension({
       ).widget;
 
       previewWidget.label = "Preview";
-      previewWidget.inputEl.readOnly = true;
-      previewWidget.inputEl.style.opacity = 0.7;
+      previewWidget.options.read_only = true;
       previewWidget.options.serialize = false;
+      const element = previewWidget.element;
+      if (element) {
+        element.readOnly = true;
+        element.style.opacity = 0.7;
+      }
       previewWidget.serialize = false;
     };
 
