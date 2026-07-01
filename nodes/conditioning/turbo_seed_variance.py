@@ -22,6 +22,8 @@ class ModeProfile:
     use_auto_strength: bool
     auto_strength_scale: float = 1.0
     layer_count: int = 1
+    use_reference_krea_noise: bool = False
+    std_unbiased: bool = False
 
 
 MODE_PROFILES = {
@@ -35,8 +37,8 @@ MODE_PROFILES = {
         name="krea2-turbo",
         padding_eps=1e-6,
         use_auto_strength=True,
-        auto_strength_scale=0.0025,
-        layer_count=12,
+        use_reference_krea_noise=True,
+        std_unbiased=True,
     ),
     "flux2-klein": ModeProfile(
         name="flux2-klein",
@@ -100,15 +102,15 @@ class TurboSeedVariance:
                         "min": 0.0,
                         "max": 100.0,
                         "step": 0.05,
-                        "tooltip": "If greater than 0, noise scale is measured embedding std times this factor and the selected mode's calibrated scale. Set to 0 to use strength.",
+                        "tooltip": "If greater than 0, noise scale is measured embedding std times this factor and the selected mode profile. Set to 0 to use strength.",
                     },
                 ),
                 "strength": (
                     "FLOAT",
                     {
-                        "default": 0.05,
+                        "default": 20.0,
                         "min": 0.0,
-                        "max": 10.0,
+                        "max": 0xFFFFFFFF,
                         "step": 0.00001,
                         "tooltip": "Absolute fallback noise scale used when auto_strength_factor is 0.",
                     },
@@ -123,7 +125,7 @@ class TurboSeedVariance:
                 "steps_switchover_percent": (
                     "FLOAT",
                     {
-                        "default": 20.0,
+                        "default": 25.0,
                         "min": 1.0,
                         "max": 99.0,
                         "step": 1.0,
@@ -245,7 +247,7 @@ class TurboSeedVariance:
 
     def _effective_strength(self, profile, tensor, real_slice, auto_strength_factor, strength):
         real_region = tensor[:, real_slice, :]
-        measured_std = real_region.std(unbiased=False).item()
+        measured_std = real_region.std(unbiased=profile.std_unbiased).item()
         if profile.use_auto_strength and auto_strength_factor > 0:
             return measured_std * auto_strength_factor * profile.auto_strength_scale, measured_std
         return strength, measured_std
@@ -261,11 +263,19 @@ class TurboSeedVariance:
         value = value.expand(*tensor.shape[:-1], profile.layer_count, value.size(-1))
         return value.reshape_as(tensor)
 
-    def _noise_mask(self, tensor, randomize_percent, seed, profile):
+    def _noise_and_mask(self, tensor, randomize_percent, seed, profile, effective_strength):
+        if profile.use_reference_krea_noise:
+            with preserved_torch_rng():
+                torch.manual_seed(seed)
+                noise = torch.rand_like(tensor) * 2 * effective_strength - effective_strength
+                torch.manual_seed(seed + 1)
+                mask = torch.bernoulli(torch.ones_like(tensor) * randomize_percent).bool()
+            return noise, mask
+
         noise_shape = self._noise_shape(tensor, profile)
         with preserved_torch_rng():
             torch.manual_seed(seed)
-            noise = torch.rand(noise_shape, device=tensor.device, dtype=tensor.dtype)
+            noise = torch.rand(noise_shape, device=tensor.device, dtype=tensor.dtype) * 2 * effective_strength - effective_strength
             torch.manual_seed(seed + 1)
             mask = torch.rand(noise_shape, device=tensor.device, dtype=tensor.dtype) < randomize_percent
         return (
@@ -379,7 +389,7 @@ class TurboSeedVariance:
         if effective_strength == 0:
             return (conditioning,)
 
-        base_noise, noise_mask = self._noise_mask(tensor, randomize_percent, seed, profile)
+        modified_noise, noise_mask = self._noise_and_mask(tensor, randomize_percent, seed, profile, effective_strength)
         noise_mask = self._apply_prompt_mask(
             noise_mask,
             tensor,
@@ -390,7 +400,7 @@ class TurboSeedVariance:
             attention_mask,
         )
 
-        modified_noise = (base_noise * 2 * effective_strength - effective_strength) * noise_mask
+        modified_noise = modified_noise * noise_mask
         noisy_tensor = tensor + modified_noise
 
         if log_to_console:
