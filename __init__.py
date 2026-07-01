@@ -1,12 +1,13 @@
-from .image_selector_node import ImageSelector
-from .image_scale_node import ImageScaleNode
-from .seed_to_noise import SeedToNoiseNode
-from .lora_name_list import LoraNameList
-from .lora_loader_node import LoraLoaderStack
-from .show_text_node import ShowTextNode
-from .prompt_text import PromptText
-from .text_replace import TextReplace
-from .openai_compatible_llm import OpenAICompatibleLLM, PreviewText
+from .nodes.image.selector import ImageSelector
+from .nodes.image.scale import ImageScaleNode
+from .nodes.sampling.seed_to_noise import SeedToNoiseNode
+from .nodes.lora.name_list import LoraNameList
+from .nodes.lora.loader_stack import LoraLoaderStack
+from .nodes.text.show import ShowTextNode
+from .nodes.text.prompt import PromptText
+from .nodes.text.replace import TextReplace
+from .nodes.text.preview import PreviewText
+from .nodes.llm.openai_compatible import OpenAICompatibleLLM
 
 WEB_DIRECTORY = "./web"
 

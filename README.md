@@ -27,6 +27,10 @@ Clone this repository into `ComfyUI/custom_nodes`, then restart ComfyUI.
 git clone https://github.com/geocine/geocine-comfyui.git ComfyUI/custom_nodes/geocine-comfyui
 ```
 
+## Development
+
+Python node implementations live under `nodes/<domain>/`. Frontend extensions live in the mirrored `web/js/<domain>/` folders. The root `__init__.py` only registers stable ComfyUI node IDs, display names, and `WEB_DIRECTORY`.
+
 ## Publish
 
 Maintainers can publish a new registry version from a clean checkout:
