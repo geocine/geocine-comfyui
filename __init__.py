@@ -13,31 +13,31 @@ from .nodes.llm.openai_compatible import OpenAICompatibleLLM
 WEB_DIRECTORY = "./web"
 
 NODE_CLASS_MAPPINGS = {
-    "ImageSelector": ImageSelector,
-    "ImageScale": ImageScaleNode,
-    "TurboSeedVariance": TurboSeedVariance,
-    "SeedToNoise": SeedToNoiseNode,
-    "LoraNameList": LoraNameList,
-    "LoraLoaderStack": LoraLoaderStack,
-    "ShowTextNode": ShowTextNode,
-    "PromptText": PromptText,
-    "TextReplace": TextReplace,
-    "OpenAICompatibleLLM": OpenAICompatibleLLM,
-    "PreviewText": PreviewText,
+    "GeocineImageSelector": ImageSelector,
+    "GeocineImageScale": ImageScaleNode,
+    "GeocineTurboSeedVariance": TurboSeedVariance,
+    "GeocineSeedToNoise": SeedToNoiseNode,
+    "GeocineLoraNameList": LoraNameList,
+    "GeocineLoraLoaderStack": LoraLoaderStack,
+    "GeocineShowTextNode": ShowTextNode,
+    "GeocinePromptText": PromptText,
+    "GeocineTextReplace": TextReplace,
+    "GeocineOpenAICompatibleLLM": OpenAICompatibleLLM,
+    "GeocinePreviewText": PreviewText,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageSelector": "Image Selector",
-    "ImageScale": "Image Scale",
-    "TurboSeedVariance": "Turbo Seed Variance",
-    "SeedToNoise": "Seed to Noise",
-    "LoraNameList": "LoRA Name List",
-    "LoraLoaderStack": "LoRA Loader Stack",
-    "ShowTextNode": "Show Text",
-    "PromptText": "Prompt Text",
-    "TextReplace": "Text Replace",
-    "OpenAICompatibleLLM": "OpenAI Compatible LLM",
-    "PreviewText": "Preview Text",
+    "GeocineImageSelector": "Image Selector",
+    "GeocineImageScale": "Image Scale",
+    "GeocineTurboSeedVariance": "Turbo Seed Variance",
+    "GeocineSeedToNoise": "Seed to Noise",
+    "GeocineLoraNameList": "LoRA Name List",
+    "GeocineLoraLoaderStack": "LoRA Loader Stack",
+    "GeocineShowTextNode": "Show Text",
+    "GeocinePromptText": "Prompt Text",
+    "GeocineTextReplace": "Text Replace",
+    "GeocineOpenAICompatibleLLM": "OpenAI Compatible LLM",
+    "GeocinePreviewText": "Preview Text",
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

@@ -5,7 +5,7 @@ const ComfyWidgets = window.comfyAPI.widgets.ComfyWidgets;
 app.registerExtension({
   name: "geocine.showtext",
   async beforeRegisterNodeDef(nodeType, nodeData, app) {
-    if (nodeData.name === "ShowTextNode") {
+    if (nodeData.name === "GeocineShowTextNode") {
       function populate(text) {
         if (this.widgets) {
           // Remove existing text widgets

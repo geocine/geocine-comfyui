@@ -3,7 +3,7 @@ import { app } from "../../../../scripts/app.js";
 app.registerExtension({
   name: "geocine.loraLoader",
   async beforeRegisterNodeDef(nodeType, nodeData) {
-    if (nodeData.name !== "LoraLoaderStack") {
+    if (nodeData.name !== "GeocineLoraLoaderStack") {
       return;
     }
 

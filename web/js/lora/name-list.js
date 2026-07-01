@@ -44,7 +44,7 @@ function syncLoraNameList(node) {
 app.registerExtension({
   name: "geocine.widgethider",
   nodeCreated(node) {
-    if (node.comfyClass !== "LoraNameList") {
+    if (node.comfyClass !== "GeocineLoraNameList") {
       return;
     }
 

@@ -5,7 +5,7 @@ const ComfyWidgets = window.comfyAPI.widgets.ComfyWidgets;
 app.registerExtension({
   name: "geocine.previewText",
   async beforeRegisterNodeDef(nodeType, nodeData, app) {
-    if (nodeData.name !== "PreviewText") {
+    if (nodeData.name !== "GeocinePreviewText") {
       return;
     }
 
