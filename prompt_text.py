@@ -11,9 +11,9 @@ class PromptText:
     RETURN_TYPES = ("STRING", )
     RETURN_NAMES = ("prompt", )
     FUNCTION = "get_value"
-    CATEGORY = "utils"
+    CATEGORY = "geocine/text"
 
     def get_value(self, prompt):
         if not prompt:
-            return (None, )
+            return ("", )
         return (prompt, )

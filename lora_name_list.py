@@ -21,7 +21,7 @@ class LoraNameList():
 
     RETURN_TYPES = ("LIST",)
     FUNCTION = "list_loras"
-    CATEGORY = "LoRA"
+    CATEGORY = "geocine/lora"
 
     def list_loras(self, lora_count, **kwargs):
         lora_list = []

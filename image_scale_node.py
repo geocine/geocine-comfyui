@@ -1,5 +1,3 @@
-import torch
-
 class ImageScaleNode:
     CATEGORY = "geocine"
     @classmethod
@@ -42,6 +40,4 @@ class ImageScaleNode:
         tile_width = int(upscale_by * width / 2 + tile_padding)
         tile_height = int(upscale_by * height / 2 + tile_padding)
 
-        print(f"latent_width: {latent_width}, latent_height: {latent_height}, upscale_by: {upscale_by}, tile_width: {tile_width}, tile_height: {tile_height}")
-        
         return (latent_width, latent_height, upscale_by, tile_width, tile_height)

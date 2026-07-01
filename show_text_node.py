@@ -1,3 +1,6 @@
+import logging
+
+
 class ShowTextNode:
     @classmethod
     def INPUT_TYPES(s):
@@ -17,21 +20,18 @@ class ShowTextNode:
     OUTPUT_NODE = True
     OUTPUT_IS_LIST = (True,)
 
-    CATEGORY = "utils"
+    CATEGORY = "geocine/text"
 
     def process_text(self, text, unique_id=None, extra_pnginfo=None):
         if unique_id is not None and extra_pnginfo is not None:
             if not isinstance(extra_pnginfo, list):
-                print("Error: extra_pnginfo is not a list")
-            elif (
-                not isinstance(extra_pnginfo[0], dict)
-                or "workflow" not in extra_pnginfo[0]
-            ):
-                print("Error: extra_pnginfo[0] is not a dict or missing 'workflow' key")
+                logging.warning("ShowTextNode: extra_pnginfo is not a list")
+            elif not extra_pnginfo or not isinstance(extra_pnginfo[0], dict) or "workflow" not in extra_pnginfo[0]:
+                logging.warning("ShowTextNode: extra_pnginfo[0] is not a dict or missing 'workflow' key")
             else:
                 workflow = extra_pnginfo[0]["workflow"]
                 node = next(
-                    (x for x in workflow["nodes"] if str(x["id"]) == str(unique_id[0])),
+                    (x for x in workflow.get("nodes", []) if str(x["id"]) == str(unique_id[0])),
                     None,
                 )
                 if node:

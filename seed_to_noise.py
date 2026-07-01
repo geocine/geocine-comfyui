@@ -1,4 +1,3 @@
-import torch
 from comfy_extras.nodes_custom_sampler import Noise_RandomNoise
 
 class SeedToNoiseNode:
@@ -7,7 +6,7 @@ class SeedToNoiseNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "seed": ("INT", {"default": -1, "min": -1, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "control_after_generate": True}),
             }
         }
     
